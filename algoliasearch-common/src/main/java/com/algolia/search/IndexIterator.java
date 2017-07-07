@@ -14,7 +14,6 @@ public class IndexIterator<T> implements Iterator<T> {
   private final Class<T> klass;
 
   private String currentCursor = null;
-  private boolean isFirstRequest = true;
   private Iterator<T> currentIterator = null;
 
   IndexIterator(APIClient apiClient, String indexName, Query query, String cursor, Class<T> klass) {
@@ -27,9 +26,13 @@ public class IndexIterator<T> implements Iterator<T> {
 
   @Override
   public boolean hasNext() {
-    if (isFirstRequest) {
+    //first call of this function
+    if (currentIterator == null) {
       executeQueryAndSetInnerState();
-      isFirstRequest = false;
+    }
+    //if the currentIterator is finished & the cursor on algolia is not finished (== null)
+    if(currentCursor != null && !currentIterator.hasNext()) {
+      executeQueryAndSetInnerState();
     }
     return currentIterator != null && currentIterator.hasNext();
   }
@@ -38,7 +41,6 @@ public class IndexIterator<T> implements Iterator<T> {
   public T next() {
     if (currentIterator == null || !currentIterator.hasNext()) {
       executeQueryAndSetInnerState();
-      isFirstRequest = false;
     }
     return currentIterator.next();
   }
